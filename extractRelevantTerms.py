@@ -20,6 +20,7 @@ def load_from_CSV(path):
     with open(path, 'r') as f:
         reader = csv.reader(f)
         raw_data = list(reader)
+    f.close()
 
     raw_data.pop(0)  # Remove header
     filename = os.path.basename(path)
@@ -103,10 +104,14 @@ def extract():
     func = partial(remove_common_words, common_words)
     final_subreddit_word_counts = pool.map(func, subreddit_word_counts)
 
+    pool.close()
+    pool.join()
+
     # Save to json file
     print('Writing to file')
     with open('relevantTerms.json', 'w') as out:
         json.dump(final_subreddit_word_counts, out)
+    out.close()
 
 if __name__ == '__main__':
     extract()

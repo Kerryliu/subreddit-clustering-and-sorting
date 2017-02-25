@@ -26,6 +26,7 @@ def get_histogram(unique_words, subreddit_word_count):
 def cluster():
     with open('relevantTerms.json') as data_file:
         data = json.load(data_file)
+    data_file.close()
 
     # Get unique words from data
     print('Finding unique words')
@@ -40,6 +41,7 @@ def cluster():
     print('Writing groups to file')
     with open('uniqueWords.json', 'w') as out:
         json.dump(unique_words, out)
+    out.close()
 
     # Generate histogram for each subreddit
     print('Generating histograms:')
@@ -48,6 +50,8 @@ def cluster():
     subreddit_histograms = []
     for histogram in tqdm(pool.imap_unordered(func, data), total=len(data)):
         subreddit_histograms.append(histogram)
+    pool.close()
+    pool.join()
 
     # clump all the histograms into one array
     print('Clumping histograms')
@@ -82,6 +86,7 @@ def cluster():
     print('Writing groups to file')
     with open('groups.json', 'w') as out:
         json.dump(groups, out)
+    out.close()
 
 if __name__ == '__main__':
     cluster()
