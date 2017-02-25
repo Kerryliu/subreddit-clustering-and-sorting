@@ -8,3 +8,4 @@ __pycache__
 groups.json
 relevantTerms.json
 uniqueWords.json
+centroids.json

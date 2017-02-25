@@ -35,11 +35,9 @@ def load_from_CSV(path):
     return [name, raw_sentences]
 
 
-def get_word_count(subreddit):
-    name, raw_sentences = subreddit
-    # print('Processing:', name)
+def sentence_to_word_dic(sentence):
     word_count = dict()
-    doc = nlp(raw_sentences)
+    doc = nlp(sentence)
     for token in doc:
         # Grab almost everything for now
         if not (token.is_punct or token.like_email
@@ -49,6 +47,13 @@ def get_word_count(subreddit):
                 word_count[word] = 1
             else:
                 word_count[word] += 1
+    return word_count
+
+
+def __get_word_count(subreddit):
+    name, raw_sentences = subreddit
+    # print('Processing:', name)
+    word_count = sentence_to_word_dic(raw_sentences)
     # Remove oddballs by pushing good words to list
     better_word_count = []  # Best variable name ever
     for key, value in word_count.items():
@@ -59,7 +64,7 @@ def get_word_count(subreddit):
     return [name, better_word_count]
 
 
-def remove_common_words(common_words, subreddit_word_count):
+def __remove_common_words(common_words, subreddit_word_count):
     good_words = []
     name, word_count = subreddit_word_count
     for word, count in word_count:
@@ -68,8 +73,7 @@ def remove_common_words(common_words, subreddit_word_count):
     return [name, good_words]
 
 
-def extract():
-    paths = glob('./data/*.csv')
+def get_subreddit_word_counts(paths, save_to_file=True):
     pool = Pool()
     # Move csv data into posts list
     print('Reading CSVs:')
@@ -81,7 +85,7 @@ def extract():
     # Get word count of each subreddit
     print('Counting words for each subreddit:')
     subreddit_word_counts = []
-    for subreddit_word_count in tqdm(pool.imap_unordered(get_word_count, subreddits),
+    for subreddit_word_count in tqdm(pool.imap_unordered(__get_word_count, subreddits),
                                      total=len(subreddits)):
         subreddit_word_counts.append(subreddit_word_count)
 
@@ -101,17 +105,22 @@ def extract():
 
     # Remove common words from each subreddit word count
     print('Removing common words from subreddits')
-    func = partial(remove_common_words, common_words)
+    func = partial(__remove_common_words, common_words)
     final_subreddit_word_counts = pool.map(func, subreddit_word_counts)
 
+    # Goodbye pool
     pool.close()
     pool.join()
 
     # Save to json file
-    print('Writing to file')
-    with open('relevantTerms.json', 'w') as out:
-        json.dump(final_subreddit_word_counts, out)
-    out.close()
+    if save_to_file:
+        print('Writing to file')
+        with open('relevantTerms.json', 'w') as out:
+            json.dump(final_subreddit_word_counts, out)
+        out.close()
+
+    return final_subreddit_word_counts
 
 if __name__ == '__main__':
-    extract()
+    paths = glob('./data/*.csv')
+    get_subreddit_word_counts()
