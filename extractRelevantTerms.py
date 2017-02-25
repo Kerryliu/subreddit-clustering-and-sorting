@@ -1,10 +1,11 @@
-import glob
 import os
 import csv
 import operator
 import json
+from glob import glob
 from multiprocessing import Pool
 from functools import partial
+from tqdm import tqdm
 import spacy
 
 # Spacy~
@@ -35,7 +36,7 @@ def load_from_CSV(path):
 
 def get_word_count(subreddit):
     name, raw_sentences = subreddit
-    print('Processing:', name)
+    # print('Processing:', name)
     word_count = dict()
     doc = nlp(raw_sentences)
     for token in doc:
@@ -67,13 +68,21 @@ def remove_common_words(common_words, subreddit_word_count):
 
 
 def main():
-    paths = glob.glob('./data/*.csv')
+    paths = glob('./data/*.csv')
     pool = Pool()
     # Move csv data into posts list
-    subreddits = pool.map(load_from_CSV, paths)
+    print('Reading CSVs:')
+    subreddits = []
+    for subreddit in tqdm(pool.imap_unordered(load_from_CSV, paths),
+                          total=len(paths)):
+        subreddits.append(subreddit)
 
     # Get word count of each subreddit
-    subreddit_word_counts = pool.map(get_word_count, subreddits)
+    print('Counting words for each subreddit:')
+    subreddit_word_counts = []
+    for subreddit_word_count in tqdm(pool.imap_unordered(get_word_count, subreddits),
+                                     total=len(subreddits)):
+        subreddit_word_counts.append(subreddit_word_count)
 
     # Global common word count.  Common words between subreddits
     print('Finding common words')
@@ -88,15 +97,16 @@ def main():
     for key, value in shared_word_count.items():
         if value >= SHARED_WORD_COUNT:
             common_words.append(key)  # No need for count
-    # Print out common words for debugging
-    # common_words.sort(key=lambda tup: tup[1], reverse=True)
 
+    # Remove common words from each subreddit word count
+    print('Removing common words from subreddits')
     func = partial(remove_common_words, common_words)
     final_subreddit_word_counts = pool.map(func, subreddit_word_counts)
 
+    # Save to json file
     print('Writing to file')
-    with open('relevantTerms.json', 'w') as outfile:
-        json.dump(final_subreddit_word_counts, outfile)
+    with open('relevantTerms.json', 'w') as out:
+        json.dump(final_subreddit_word_counts, out)
 
 if __name__ == '__main__':
     main()
