@@ -13,7 +13,7 @@ nlp = spacy.load('en')
 
 # Constants/Tweakable values
 SUBREDDIT_MIN_WORD_COUNT = 20  # How common a word needs to be for it to count
-SHARED_WORD_COUNT = 500  # How isolated a word is to a subreddit for it to count
+SHARED_WORD_COUNT = 250  # How isolated a word is to a subreddit for it to count
 
 
 def load_from_CSV(path):
@@ -67,7 +67,7 @@ def remove_common_words(common_words, subreddit_word_count):
     return [name, good_words]
 
 
-def main():
+def extract():
     paths = glob('./data/*.csv')
     pool = Pool()
     # Move csv data into posts list
@@ -109,4 +109,4 @@ def main():
         json.dump(final_subreddit_word_counts, out)
 
 if __name__ == '__main__':
-    main()
+    extract()

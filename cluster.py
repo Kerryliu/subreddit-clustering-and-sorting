@@ -8,7 +8,7 @@ from sklearn.decomposition import PCA
 from scipy import spatial
 
 # Constants/Tweakable values
-CLUSTERS = 100
+CLUSTERS = 150
 NUM_TOP_GROUPS = 5
 
 
@@ -23,7 +23,7 @@ def get_histogram(unique_words, subreddit_word_count):
     return [name, histogram]
 
 
-def main():
+def cluster():
     with open('relevantTerms.json') as data_file:
         data = json.load(data_file)
 
@@ -45,15 +45,15 @@ def main():
     print('Generating histograms:')
     pool = Pool()
     func = partial(get_histogram, unique_words)
-    histograms = []
+    subreddit_histograms = []
     for histogram in tqdm(pool.imap_unordered(func, data), total=len(data)):
-        histograms.append(histogram)
+        subreddit_histograms.append(histogram)
 
     # clump all the histograms into one array
     print('Clumping histograms')
     big_ass_array = np.empty((len(data), len(unique_words)))
     itterator = 0
-    for subreddit, histogram in histograms:
+    for subreddit, histogram in subreddit_histograms:
         big_ass_array[itterator] = histogram
         itterator += 1
 
@@ -62,9 +62,10 @@ def main():
     kmeans = KMeans(n_clusters=CLUSTERS, n_jobs=-1).fit(big_ass_array)
 
     # How'd we do?
-    print('Grouping subreddits:')
+    print('Grouping subreddits')
     groups = []
-    for name, histogram in tqdm(histograms, total=len(histograms)):
+    for name, histogram in tqdm(subreddit_histograms,
+                                total=len(subreddit_histograms)):
         weights = []
         for centroid in kmeans.cluster_centers_:
             # Get rid of warning
@@ -83,4 +84,4 @@ def main():
         json.dump(groups, out)
 
 if __name__ == '__main__':
-    main()
+    cluster()
