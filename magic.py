@@ -8,11 +8,11 @@ from sklearn.decomposition import PCA
 from scipy import spatial
 
 # Constants/Tweakable values
-CLUSTERS = 100
+CLUSTERS = 50
 NUM_THREADS = -1
-NUM_TOP_GROUPS = 5
-SENTENCE_MULTIPLIER = 200
-OFFSET = 0.05
+NUM_TOP_GROUPS = 3
+SENTENCE_MULTIPLIER = 100
+OFFSET = 1
 
 
 def get_histogram_from_sentence(unique_words, word_list):

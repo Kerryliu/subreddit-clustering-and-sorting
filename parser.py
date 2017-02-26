@@ -15,7 +15,6 @@ nlp = spacy.load('en')
 SUBREDDIT_MIN_WORD_COUNT = 20  # How common a word needs to be for it to count
 SHARED_WORD_COUNT = 500  # How isolated a word is to a subreddit for it to count
 
-
 def load_from_CSV(path):
     with open(path, 'r') as f:
         reader = csv.reader(f)
@@ -30,9 +29,9 @@ def load_from_CSV(path):
     raw_sentences = ''
     for raw_post_data in raw_data:
         title = raw_post_data[4]
-        self_text = raw_post_data[9]
-        raw_sentences += title + ' ' + self_text
-    return [name, raw_sentences]
+        # self_text = raw_post_data[9] # self texts are too inconsistent
+        raw_sentences += title + ' '
+    return (name, raw_sentences)
 
 
 def sentence_to_word_dic(sentence):
@@ -40,13 +39,19 @@ def sentence_to_word_dic(sentence):
     doc = nlp(sentence)
     for token in doc:
         # Grab almost everything for now
-        if not (token.is_punct or token.like_email
+        if not (token.is_punct or token.like_email or token.is_stop
                 or token.like_url or token.is_space or len(token.text) > 50):
             word = token.lower_
             if word not in word_count:
                 word_count[word] = 1
             else:
                 word_count[word] += 1
+    for np in doc.noun_chunks:
+        word = str.lower(np.root.text)
+        if word not in word_count:
+            word_count[word] = 1
+        else:
+            word_count[word] += 1
     return word_count
 
 
@@ -61,7 +66,7 @@ def __get_word_count(subreddit):
             better_word_count.append([key, value])
     # Sort to make my life easier when debugging
     better_word_count.sort(key=lambda tup: tup[1], reverse=True)
-    return [name, better_word_count]
+    return (name, better_word_count)
 
 
 def __remove_common_words(common_words, subreddit_word_count):
@@ -69,8 +74,8 @@ def __remove_common_words(common_words, subreddit_word_count):
     name, word_count = subreddit_word_count
     for word, count in word_count:
         if word not in common_words:
-            good_words.append([word, count])
-    return [name, good_words]
+            good_words.append((word, count))
+    return (name, good_words)
 
 
 def get_subreddit_word_counts(paths, save_to_file=True):
@@ -123,4 +128,4 @@ def get_subreddit_word_counts(paths, save_to_file=True):
 
 if __name__ == '__main__':
     paths = glob('./data/*.csv')
-    get_subreddit_word_counts()
+    get_subreddit_word_counts(paths, save_to_file=True)
