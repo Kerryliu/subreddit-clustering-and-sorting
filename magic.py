@@ -8,40 +8,22 @@ from sklearn.decomposition import PCA
 from scipy import spatial
 
 # Constants/Tweakable values
-CLUSTERS = 150
+CLUSTERS = 100
 NUM_THREADS = -1
-SENTENCE_WORD_WEIGHT = 10
-
-def get_unique_words(data):
-    unique_words = set()
-    for subreddit, word_count in data:
-        for word, count in word_count:
-            if word not in unique_words:
-                unique_words.add(word)
-    return list(unique_words)  # Convert set to numpy array
+NUM_TOP_GROUPS = 5
+SENTENCE_MULTIPLIER = 200
+OFFSET = 0.05
 
 
 def get_histogram_from_sentence(unique_words, word_list):
     histogram = np.zeros(len(unique_words))
-    for word in word_list:
+    for word, count in word_list.items():
         if word in unique_words:
-            histogram[unique_words.index(word)] += SENTENCE_WORD_WEIGHT
-    histogram /= 100
+            histogram[unique_words.index(word)] = count * SENTENCE_MULTIPLIER
     return histogram
 
 
-def __get_histogram_words(unique_words, subreddit_word_count):
-    histogram = np.zeros(len(unique_words))
-    name, word_count = subreddit_word_count
-    # print('Processing', name)
-    for word, count in word_count:
-        if word in unique_words:
-            histogram[unique_words.index(word)] = count
-    histogram /= 100
-    return [name, histogram]
-
-
-def __get_histogram_groups(centroids, subreddit):
+def get_histogram_groups(centroids, subreddit):
     name, histogram = subreddit
     weights = []
     for centroid in centroids:
@@ -52,14 +34,33 @@ def __get_histogram_groups(centroids, subreddit):
     weights = np.asarray(weights)
     # Sort indexes of weights using the values stored at the index
     weighted_groups = np.argsort(weights)[:-1]
-    return [name, weighted_groups.tolist()]
+    top_groups = weighted_groups[:NUM_TOP_GROUPS].tolist()
+    return [name, top_groups]
 
 
-def cluster(unique_words, data, save_to_file):
+def __get_histogram(unique_words, subreddit_word_count):
+    histogram = np.zeros(len(unique_words))
+    name, word_count = subreddit_word_count
+    # print('Processing', name)
+    for word, count in word_count:
+        if word in unique_words:
+            histogram[unique_words.index(word)] = count
+    histogram /= OFFSET
+    return [name, histogram]
+
+
+def cluster(data, save_to_file):
+    unique_words = set()
+    for subreddit, word_count in data:
+        for word, count in word_count:
+            if word not in unique_words:
+                unique_words.add(word)
+    unique_words = list(unique_words)
+
     # Generate histogram for each subreddit
-    print('Generating histograms:')
+    print('Generating histograms')
     pool = Pool()
-    func = partial(__get_histogram_words, unique_words)
+    func = partial(__get_histogram, unique_words)
     subreddit_histograms = []
     for histogram in tqdm(pool.imap_unordered(func, data), total=len(data)):
         subreddit_histograms.append(histogram)
@@ -79,7 +80,7 @@ def cluster(unique_words, data, save_to_file):
     # How'd we do?
     print('Grouping subreddits')
     groups = []
-    func = partial(__get_histogram_groups, kmeans.cluster_centers_)
+    func = partial(get_histogram_groups, kmeans.cluster_centers_)
     for histogram_group in tqdm(pool.imap_unordered(func, subreddit_histograms),
                                 total=len(subreddit_histograms)):
         groups.append(histogram_group)
@@ -100,7 +101,7 @@ def cluster(unique_words, data, save_to_file):
             json.dump(kmeans.cluster_centers_.tolist(), out)
         out.close()
 
-    return groups
+    return unique_words, groups, kmeans.cluster_centers_
 
 if __name__ == '__main__':
     with open('relevantTerms.json') as data_file:

@@ -13,7 +13,7 @@ nlp = spacy.load('en')
 
 # Constants/Tweakable values
 SUBREDDIT_MIN_WORD_COUNT = 20  # How common a word needs to be for it to count
-SHARED_WORD_COUNT = 250  # How isolated a word is to a subreddit for it to count
+SHARED_WORD_COUNT = 500  # How isolated a word is to a subreddit for it to count
 
 
 def load_from_CSV(path):
@@ -76,14 +76,14 @@ def __remove_common_words(common_words, subreddit_word_count):
 def get_subreddit_word_counts(paths, save_to_file=True):
     pool = Pool()
     # Move csv data into posts list
-    print('Reading CSVs:')
+    print('Reading CSVs')
     subreddits = []
     for subreddit in tqdm(pool.imap_unordered(load_from_CSV, paths),
                           total=len(paths)):
         subreddits.append(subreddit)
 
     # Get word count of each subreddit
-    print('Counting words for each subreddit:')
+    print('Counting words for each subreddit')
     subreddit_word_counts = []
     for subreddit_word_count in tqdm(pool.imap_unordered(__get_word_count, subreddits),
                                      total=len(subreddits)):
