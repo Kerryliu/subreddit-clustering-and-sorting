@@ -14,10 +14,11 @@ def main():
             relevant_terms = json.load(data_file)
         data_file.close()
 
-    print('Enter a request')
-    sentence = input()
-    result = classify.classify(relevant_terms, sentence)
-    print(result[:5])
+    while True:
+        print('Enter a request:')
+        sentence = input()
+        result = classify.classify(relevant_terms, sentence)
+        print(result[:5])
 
 if __name__ == '__main__':
     main()

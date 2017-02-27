@@ -6,32 +6,23 @@ from functools import partial
 from tqdm import tqdm
 
 
-def get_top_subreddits(parsed_sentence, relevantTerms):
-    pool = Pool()
+def get_top_subreddits(parsed_sentence, relevant_terms):
     ranks = []
-    func = partial(__compare_to_subreddit, parsed_sentence)
-    for subreddit_weight in tqdm(pool.imap_unordered(
-            func, relevantTerms), total=len(relevantTerms)):
-        if subreddit_weight[1] != 0:
-            ranks.append(subreddit_weight)
-    pool.close()
-    pool.join()
+    for subreddit_word_count in relevant_terms:
+        weight = 0
+        name, word_count = subreddit_word_count
+        word_count = dict(word_count)
+        for word, count in parsed_sentence.items():
+            if word in word_count:
+                weight += count * word_count[word]
+        if weight != 0:
+            ranks.append((name, weight))
     ranks.sort(key=lambda tup: tup[1], reverse=True)
     return ranks
 
 
-def __compare_to_subreddit(parsed_sentence, subreddit_word_count):
-    weight = 0
-    name, word_count = subreddit_word_count
-    word_count = dict(word_count)
-    for word, count in parsed_sentence.items():
-        if word in word_count:
-            weight += count * word_count[word]
-    return (name, weight)
-
-
 def classify(relevant_terms, sentence):
-    word_count = parser.sentence_to_word_dic(sentence)
+    word_count = parser.sentence_to_word_dict(sentence)
     result = get_top_subreddits(word_count, relevant_terms)
     return result
 

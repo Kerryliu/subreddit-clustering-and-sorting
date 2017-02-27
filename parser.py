@@ -10,10 +10,14 @@ import spacy
 
 # Spacy~
 nlp = spacy.load('en')
+stop_words = ['want'] # Words that should not be counted. Import from file later
+for stop_word in stop_words:
+    nlp.vocab[stop_word].is_stop = True
 
 # Constants/Tweakable values
 SUBREDDIT_MIN_WORD_COUNT = 20  # How common a word needs to be for it to count
-SHARED_WORD_COUNT = 500  # How isolated a word is to a subreddit for it to count
+SHARED_WORD_COUNT = 250  # If word appears in this many subreddits, don't count
+
 
 def load_from_CSV(path):
     with open(path, 'r') as f:
@@ -34,7 +38,7 @@ def load_from_CSV(path):
     return (name, raw_sentences)
 
 
-def sentence_to_word_dic(sentence):
+def sentence_to_word_dict(sentence):
     word_count = dict()
     doc = nlp(sentence)
     for token in doc:
@@ -58,7 +62,7 @@ def sentence_to_word_dic(sentence):
 def __get_word_count(subreddit):
     name, raw_sentences = subreddit
     # print('Processing:', name)
-    word_count = sentence_to_word_dic(raw_sentences)
+    word_count = sentence_to_word_dict(raw_sentences)
     # Remove oddballs by pushing good words to list
     better_word_count = []  # Best variable name ever
     for key, value in word_count.items():
