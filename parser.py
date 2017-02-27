@@ -16,7 +16,7 @@ for stop_word in stop_words:
 
 # Constants/Tweakable values
 SUBREDDIT_MIN_WORD_COUNT = 20  # How common a word needs to be for it to count
-SHARED_WORD_COUNT = 250  # If word appears in this many subreddits, don't count
+SHARED_WORD_COUNT = 500  # If word appears in this many subreddits, don't count
 
 
 def load_from_CSV(path):
@@ -58,6 +58,13 @@ def sentence_to_word_dict(sentence):
             word_count[word] += 1
     return word_count
 
+
+def  get_entities(sentence):
+    doc = nlp(sentence)
+    entities = []
+    for ent in doc.ents:
+        entities.append((ent.label_, ent.text))
+    return entities
 
 def __get_word_count(subreddit):
     name, raw_sentences = subreddit
