@@ -1,9 +1,6 @@
 from glob import glob
 import json
 import parser
-from multiprocessing import Pool
-from functools import partial
-from tqdm import tqdm
 
 
 def get_top_subreddits(parsed_sentence, relevant_terms):
