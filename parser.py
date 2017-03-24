@@ -15,8 +15,9 @@ for stop_word in stop_words:
     nlp.vocab[stop_word].is_stop = True
 
 # Constants/Tweakable values
-SUBREDDIT_MIN_WORD_COUNT = 20  # How common a word needs to be for it to count
+SUBREDDIT_MIN_WORD_COUNT = 10  # How common a word needs to be for it to count
 SHARED_WORD_COUNT = 500  # If word appears in this many subreddits, don't count
+NOUN_MULTIPLIER = 5 # Rate nouns higher than verbs
 
 
 def load_from_CSV(path):
@@ -53,9 +54,9 @@ def sentence_to_word_dict(sentence):
     for np in doc.noun_chunks:
         word = str.lower(np.root.text)
         if word not in word_count:
-            word_count[word] = 1
+            word_count[word] = NOUN_MULTIPLIER
         else:
-            word_count[word] += 1
+            word_count[word] += NOUN_MULTIPLIER
     return word_count
 
 

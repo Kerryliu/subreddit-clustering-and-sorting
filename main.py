@@ -19,8 +19,6 @@ def main():
         sentence = input()
         result = classify.classify(relevant_terms, sentence)
         print(result[:5])
-        entities = parser.get_entities(sentence)
-        print(entities)
 
 if __name__ == '__main__':
     main()
