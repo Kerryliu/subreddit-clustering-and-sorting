@@ -48,15 +48,15 @@ def sentence_to_word_dict(sentence):
                 or token.like_url or token.is_space or len(token.text) > 50):
             word = token.lower_
             if word not in word_count:
-                word_count[word] = 1
+                word_count[word] = 1/NOUN_MULTIPLIER
             else:
-                word_count[word] += 1
+                word_count[word] += 1/NOUN_MULTIPLIER
     for np in doc.noun_chunks:
         word = str.lower(np.root.text)
         if word not in word_count:
-            word_count[word] = NOUN_MULTIPLIER
+            word_count[word] = 1
         else:
-            word_count[word] += NOUN_MULTIPLIER
+            word_count[word] += 1
     return word_count
 
 
