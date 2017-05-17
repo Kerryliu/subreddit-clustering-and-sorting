@@ -1,4 +1,4 @@
-# Sub reddit clustering and sorting
+# Subreddit clustering and sorting
 
  - parser.py parses the data from each subreddit, generating a list of relevant words that corresponds to that subreddit.  
  - Once training is complete, classify.py can be used to classify sentences to subreddits based on similarity.  
